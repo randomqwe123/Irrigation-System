@@ -1,0 +1,86 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+const int pump1 = 26;
+const int pump2 = 25;
+const int led1 = 14;  // Define the GPIO pin for LED 1
+const int led2 = 27;  // Define the GPIO pin for LED 2
+
+const int buttonPins[] = {12, 13, 5, 23};
+const int numButtons = sizeof(buttonPins) / sizeof(buttonPins[0]);
+int buttonStates[numButtons];
+int menu = 0;
+
+void setup() {
+  lcd.begin(16, 2);
+  lcd.backlight();
+  Serial.begin(9600);
+
+  pinMode(pump1, OUTPUT);
+  pinMode(pump2, OUTPUT);
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
+  
+  // Initialize buttons as inputs
+  for (int i = 0; i < numButtons; i++) {
+    pinMode(buttonPins[i], INPUT);
+  }
+}
+
+void loop() {
+  // Button to switch menus
+  if (digitalRead(buttonPins[0]) == HIGH) {
+    menu = (menu == 0) ? 1 : 0;  // Toggle between menu 0 and menu 1
+    delay(200);  // Debounce delay
+  }
+
+  // Menu 0: Idle Screen
+  if (menu == 0) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Irrigation System");
+    lcd.setCursor(0, 1);
+    lcd.print("Press to start");
+
+    digitalWrite(pump1, LOW);
+    digitalWrite(pump2, LOW);
+    digitalWrite(led1, LOW);
+    digitalWrite(led2, LOW);
+  }
+
+  // Menu 1: Control Pumps
+  if (menu == 1) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("1:Pump1 2:Pump2");
+
+    // Check button 1 to activate pump1
+    if (digitalRead(buttonPins[1]) == HIGH) {
+      digitalWrite(pump1, HIGH);
+      digitalWrite(led1, HIGH);
+      lcd.setCursor(0, 1);
+      lcd.print("Pump 1 ON ");
+      delay(500);  // Time for pump to run
+      digitalWrite(pump1, LOW);
+      digitalWrite(led1, LOW);
+    }
+
+    // Check button 2 to activate pump2
+    if (digitalRead(buttonPins[2]) == HIGH) {
+      digitalWrite(pump2, HIGH);
+      digitalWrite(led2, HIGH);
+      lcd.setCursor(0, 1);
+      lcd.print("Pump 2 ON ");
+      delay(500);  // Time for pump to run
+      digitalWrite(pump2, LOW);
+      digitalWrite(led2, LOW);
+    }
+
+    // Exit menu
+    if (digitalRead(buttonPins[3]) == HIGH) {
+      menu = 0;
+      delay(200);  // Debounce delay
+    }
+  }
+}
